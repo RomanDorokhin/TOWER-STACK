@@ -809,12 +809,15 @@ document.addEventListener('keydown', e => {
   }
 });
 
-canvas.addEventListener('touchstart', e => {
+document.addEventListener('touchstart', e => {
+  // Don't intercept the restart button
+  if (e.target.id === 'restart-btn') return;
   e.preventDefault();
   handleTap();
 }, { passive: false });
 
-canvas.addEventListener('mousedown', e => {
+document.addEventListener('mousedown', e => {
+  if (e.target.id === 'restart-btn') return;
   handleTap();
 });
 
