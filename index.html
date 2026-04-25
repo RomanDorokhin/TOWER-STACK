@@ -243,7 +243,7 @@ canvas{
       <div id="score-label">блоков</div>
     </div>
     <div id="best-wrap">
-      <div id="best-num" id="best-num">0</div>
+      <div id="best-num">0</div>
       <div id="best-label">рекорд</div>
     </div>
     <div id="combo-banner"></div>
@@ -379,6 +379,8 @@ function initGame() {
   targetCameraY = 0;
   frame = 0;
   newBest = false;
+  document.getElementById('score-num').textContent = '0';
+  hideCombo();
 
   // Base block
   const baseW = W * 0.58;
@@ -548,8 +550,6 @@ function spawnFloater(x, y, text, color, size) {
 // ══════════════════════════════════════════
 // DRAW
 // ══════════════════════════════════════════
-let bgOffset = 0;
-
 function drawBG() {
   // Deep space gradient
   const grad = ctx.createLinearGradient(0, 0, 0, H);
@@ -664,7 +664,6 @@ function drawMovingBlock(camY) {
   const overlapLeft = Math.max(moving.x - moving.w/2, top.x - top.w/2);
   const overlapRight = Math.min(moving.x + moving.w/2, top.x + top.w/2);
   if (overlapRight > overlapLeft) {
-    const [tl] = PALETTE[top.ci % PALETTE.length];
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.beginPath();
     ctx.roundRect(overlapLeft, top.y + camY, overlapRight - overlapLeft, BLOCK_H, 4);
@@ -793,13 +792,9 @@ function loop() {
 // INPUT
 // ══════════════════════════════════════════
 function handleTap() {
-  if (state === 'start') {
-    startGame();
-    return;
-  }
-  if (state === 'playing') {
-    drop();
-  }
+  if (state === 'start') { startGame(); return; }
+  if (state === 'playing') { drop(); return; }
+  if (state === 'over') { restartFromOver(); }
 }
 
 document.addEventListener('keydown', e => {
@@ -840,6 +835,7 @@ function startGame() {
 
 function restartFromOver() {
   document.getElementById('over-screen').classList.add('hidden');
+  document.getElementById('best-num').textContent = bestScore;
   setTimeout(() => {
     state = 'playing';
     initGame();
