@@ -1,113 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Visible Controls TDS</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
-    <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; }
-        canvas { display: block; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Neon Dash</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/BootScene.js"></script>
+<script src="js/GameScene.js"></script>
+<style>
+  body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; margin: 0 auto; }
+</style>
 </head>
 <body>
 <script>
 const config = {
-    type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
-    scene: { preload, create, update }
+  type: Phaser.AUTO,
+  width: 800,
+  height: 400,
+  backgroundColor: '#000814',
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 1200 }, debug: false },
+  },
+  scene: [BootScene, GameScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  }
 };
-
 const game = new Phaser.Game(config);
-let player, enemies, bullets, score = 0, scoreText;
-let joystickBase, joystickStick, fireBtn;
-let moveVector = new Phaser.Math.Vector2(0, 0);
-let isFiring = false;
-
-function preload() {
-    const g = this.make.graphics({ x: 0, y: 0, add: false });
-    g.fillStyle(0x00ff00); g.fillCircle(16, 16, 16); g.generateTexture('player', 32, 32);
-    g.clear(); g.fillStyle(0xff0000); g.fillCircle(16, 16, 16); g.generateTexture('enemy', 32, 32);
-    g.clear(); g.fillStyle(0xffff00); g.fillCircle(4, 4, 4); g.generateTexture('bullet', 8, 8);
-}
-
-function create() {
-    player = this.physics.add.sprite(config.width / 2, config.height / 2, 'player');
-    player.setCollideWorldBounds(true);
-    enemies = this.physics.add.group();
-    bullets = this.physics.add.group();
-    scoreText = this.add.text(20, 20, 'Score: 0', { fontSize: '24px', fill: '#fff' });
-
-    // Визуальные органы управления
-    joystickBase = this.add.circle(100, config.height - 100, 50, 0xffffff, 0.2);
-    joystickStick = this.add.circle(100, config.height - 100, 25, 0xffffff, 0.4);
-    fireBtn = this.add.circle(config.width - 100, config.height - 100, 50, 0xff0000, 0.4);
-    
-    // Закрепляем UI на экране
-    joystickBase.setScrollFactor(0);
-    joystickStick.setScrollFactor(0);
-    fireBtn.setScrollFactor(0);
-
-    this.input.addPointer(2); // Мультитач
-
-    this.input.on('pointermove', (p) => {
-        if (p.x < config.width / 2 && p.isDown) {
-            const dx = p.x - 100;
-            const dy = p.y - (config.height - 100);
-            const dist = Math.min(50, Math.sqrt(dx*dx + dy*dy));
-            const angle = Math.atan2(dy, dx);
-            joystickStick.setPosition(100 + Math.cos(angle) * dist, (config.height - 100) + Math.sin(angle) * dist);
-            moveVector.set(Math.cos(angle), Math.sin(angle)).scale(dist / 50);
-        }
-    });
-
-    this.input.on('pointerup', (p) => {
-        if (p.x < config.width / 2) {
-            joystickStick.setPosition(100, config.height - 100);
-            moveVector.set(0, 0);
-        } else {
-            isFiring = false;
-        }
-    });
-
-    this.input.on('pointerdown', (p) => {
-        if (p.x > config.width / 2) isFiring = true;
-    });
-
-    this.time.addEvent({ delay: 1000, callback: spawnEnemy, callbackScope: this, loop: true });
-    
-    this.physics.add.collider(bullets, enemies, (b, e) => { b.destroy(); e.destroy(); score += 10; scoreText.setText('Score: ' + score); });
-    this.physics.add.collider(player, enemies, () => { this.physics.pause(); this.add.text(config.width/2, config.height/2, 'GAME OVER', { fontSize: '64px', fill: '#f00' }).setOrigin(0.5); });
-}
-
-function spawnEnemy() {
-    const x = Phaser.Math.Between(0, config.width);
-    const y = Phaser.Math.Between(0, config.height);
-    if (Phaser.Math.Distance.Between(x, y, player.x, player.y) > 200) {
-        const enemy = enemies.create(x, y, 'enemy');
-        this.physics.moveToObject(enemy, player, 120);
-    }
-}
-
-function update(time, delta) {
-    player.setVelocity(moveVector.x * 300, moveVector.y * 300);
-    
-    // Авто-стрельба при зажатой кнопке
-    if (isFiring && time % 250 < delta) {
-        let nearest = null;
-        let minDist = 400;
-        enemies.getChildren().forEach(e => {
-            const d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-            if (d < minDist) { minDist = d; nearest = e; }
-        });
-        if (nearest) {
-            const b = bullets.create(player.x, player.y, 'bullet');
-            this.physics.moveToObject(b, nearest, 600);
-        }
-    }
-}
 </script>
 </body>
 </html>
